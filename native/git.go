@@ -83,6 +83,31 @@ func packetLines(body []byte, receive bool) ([]string, []byte, error) {
 const upload = "git-upload-pack"
 const receive = "git-receive-pack"
 
+// Keep two small wire requests per repository. The semantic caches still
+// handle equivalent clients that frame or order their requests differently.
+type uploadReply struct {
+	request    string
+	generation uint64
+	response   []byte
+}
+
+func (r *Repo) cachedUpload(body []byte, generation uint64) []byte {
+	for i := range r.uploadReplies {
+		entry := &r.uploadReplies[i]
+		if entry.response != nil && entry.generation == generation && entry.request == string(body) {
+			return entry.response
+		}
+	}
+	return nil
+}
+
+func (r *Repo) rememberUpload(body, response []byte, generation uint64) {
+	if len(body) <= 4096 && len(response) <= 64<<10 {
+		r.uploadReplies[r.nextUpload] = uploadReply{string(body), generation, response}
+		r.nextUpload = (r.nextUpload + 1) % len(r.uploadReplies)
+	}
+}
+
 var uploadV2 = func() []byte {
 	var b []byte
 	for _, line := range []string{"version 2\n", "agent=goof/1\n", "ls-refs=unborn\n", "fetch=shallow\n", "object-format=sha1\n"} {

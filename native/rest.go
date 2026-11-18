@@ -9,6 +9,19 @@ import (
 	"strings"
 )
 
+func repoPath(path string) (owner, name, tail string, ok bool) {
+	path, ok = strings.CutPrefix(path, "/repos/")
+	if !ok {
+		return
+	}
+	owner, path, ok = strings.Cut(path, "/")
+	if !ok {
+		return
+	}
+	name, tail, _ = strings.Cut(path, "/")
+	return
+}
+
 func (s *Store) rest(req *http.Request, b M) answer {
 	path := strings.TrimPrefix(req.URL.Path, "/api/v3")
 	method := req.Method
@@ -42,15 +55,10 @@ func (s *Store) rest(req *http.Request, b M) answer {
 			return page(rs, q, req.URL.Path, req.Host)
 		}
 	}
-	path, yes := strings.CutPrefix(path, "/repos/")
+	owner, name, tail, yes := repoPath(path)
 	if !yes {
 		return notFound()
 	}
-	owner, tail, yes := strings.Cut(path, "/")
-	if !yes {
-		return notFound()
-	}
-	name, tail, _ := strings.Cut(tail, "/")
 	r := s.repo(owner, name)
 	if r == nil {
 		return notFound()

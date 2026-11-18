@@ -218,3 +218,67 @@ func TestPushRejectsMissingLinkedObject(t *testing.T) {
 		t.Fatal(string(second))
 	}
 }
+
+func BenchmarkConcurrentClone(b *testing.B) {
+	f := newForge("test", "octopus", "")
+	s := f.store
+	repo, _ := s.create(M{"name": "garden"})
+	files := map[string]fileEntry{"seed.txt": {"100644", s.objects.put(3, []byte("file bytes"))}}
+	parent := s.objects.makeCommit(files, zero, "first")
+	tip := s.objects.makeCommit(files, parent, "second")
+	repo.setRef("refs/heads/main", tip)
+	refs := append(packet(nil, "command=ls-refs\n"), delim...)
+	refs = append(packet(refs, "symrefs\n"), flush...)
+	fetch := append(packet(nil, "command=fetch\n"), delim...)
+	fetch = packet(fetch, "want "+hexID(tip)+"\n")
+	fetch = packet(fetch, "deepen 1\n")
+	fetch = append(packet(fetch, "done\n"), flush...)
+	remote := "http://local/octopus/garden.git/"
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.RunParallel(func(p *testing.PB) {
+		w := &discardResponse{header: make(http.Header)}
+		get := httptest.NewRequest("GET", remote+"info/refs?service=git-upload-pack", nil)
+		get.Header.Set("Authorization", "Bearer test")
+		get.Header.Set("Git-Protocol", "version=2")
+		post := httptest.NewRequest("POST", remote+"git-upload-pack", nil)
+		post.Header.Set("Authorization", "Bearer test")
+		post.Header.Set("Git-Protocol", "version=2")
+		reader := bytes.NewReader(nil)
+		post.Body = io.NopCloser(reader)
+		send := func(body []byte) { reader.Reset(body); post.ContentLength = int64(len(body)); f.ServeHTTP(w, post) }
+		for p.Next() {
+			f.ServeHTTP(w, get)
+			send(refs)
+			send(fetch)
+		}
+	})
+}
+
+func TestUploadReplyRefreshAndAuthorization(t *testing.T) {
+	f := newForge("test", "octopus", "")
+	s := f.store
+	repo, _ := s.create(M{"name": "garden"})
+	first := s.objects.makeCommit(nil, zero, "first")
+	repo.setRef("refs/heads/main", first)
+	remote := "/octopus/garden.git/git-upload-pack"
+	body := append(packet(nil, "command=ls-refs\n"), delim...)
+	body = append(packet(body, "symrefs\n"), flush...)
+	if response := request(f, "POST", remote, string(body)); !strings.Contains(response.Body.String(), hexID(first)) {
+		t.Fatal(response.Body.String())
+	}
+	noAuth := httptest.NewRequest("POST", "http://local"+remote, bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	f.ServeHTTP(w, noAuth)
+	if w.Code != 401 {
+		t.Fatal(w.Code)
+	}
+	if response := request(f, "PUT", "/api/v3/repos/octopus/garden/contents/seed.txt", `{"content":"dGVzdA==","message":"second"}`); response.Code != 201 {
+		t.Fatal(response.Code, response.Body.String())
+	}
+	got := request(f, "POST", remote, string(body))
+	latest := repo.refs["refs/heads/main"]
+	if got.Code != 200 || !strings.Contains(got.Body.String(), hexID(latest)) || strings.Contains(got.Body.String(), hexID(first)) {
+		t.Fatal(got.Code, got.Body.String())
+	}
+}

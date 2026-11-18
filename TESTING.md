@@ -137,3 +137,22 @@ response writer. Median values over three runs on the workspace host:
 
 Pack timings overlap across runs. The native microbenchmarks isolate server
 work and omit connection handling.
+
+### Native follow-up
+
+Four runs per revision on the same host, using the native benchmarks and a
+five-thread Go runtime. Each value is the median per operation. A clone
+operation runs a protocol v2 advertisement, ls-refs, and shallow fetch
+through the production HTTP handler, with multiple clients in parallel.
+
+| Path | Before | After | Allocations per operation |
+| --- | ---: | ---: | ---: |
+| Warm issue GET | 618 ns | 528 ns | 6 → 6 |
+| Issue create | 5.25 µs | 4.49 µs | 20 → 19 |
+| Concurrent warm clone | 5.14 µs | 1.28 µs | 48 → 26 |
+
+The upload path remembers two small wire requests per repository and serves
+hits under a shared read lock. Reply reuse checks the object-store generation,
+and ref changes discard the repository's cached replies. Uncached requests
+still use the existing protocol parser and semantic caches. These timings
+measure the handler and omit TCP and client overhead.

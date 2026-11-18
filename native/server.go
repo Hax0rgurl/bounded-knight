@@ -82,7 +82,21 @@ func (f *Forge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var doc any = M(nil)
-	if !isGit && len(raw) > 0 && json.Unmarshal(raw, &doc) != nil {
+	var parseErr error
+	if !isGit && len(raw) > 0 {
+		// REST requests with an object body can decode into the map directly.
+		// Keep the generic decoder for other JSON shapes and batch GraphQL.
+		trimmed := bytes.Trim(raw, " \t\r\n")
+		if (path == "/api/v3" || strings.HasPrefix(path, "/api/v3/")) &&
+			len(trimmed) > 0 && trimmed[0] == '{' {
+			var body M
+			parseErr = json.Unmarshal(trimmed, &body)
+			doc = body
+		} else {
+			parseErr = json.Unmarshal(raw, &doc)
+		}
+	}
+	if parseErr != nil {
 		if path == "/mcp" {
 			b, _ := json.Marshal(rpcError(nil, -32700, "Parse error"))
 			writeBytes(w, 400, "application/json", b)
@@ -92,13 +106,7 @@ func (f *Forge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isGit {
-		v2 := false
-		for _, p := range strings.Split(r.Header.Get("Git-Protocol"), ":") {
-			if p == "version=2" {
-				v2 = true
-				break
-			}
-		}
+		v2 := strings.Contains(":"+r.Header.Get("Git-Protocol")+":", ":version=2:")
 		b, ok := f.git(r, owner, name, service, v2, raw)
 		if !ok {
 			writeBytes(w, 404, "application/json", []byte("{\"message\":\"Not Found\"}"))
@@ -155,7 +163,14 @@ func gitRoute(r *http.Request) (string, string, string, bool) {
 		if action != "info/refs" {
 			return "", "", "", false
 		}
-		action = r.URL.Query().Get("service")
+		switch r.URL.RawQuery {
+		case "service=" + upload:
+			action = upload
+		case "service=" + receive:
+			action = receive
+		default:
+			action = r.URL.Query().Get("service")
+		}
 	}
 	if action != upload && action != receive {
 		return "", "", "", false
@@ -164,6 +179,27 @@ func gitRoute(r *http.Request) (string, string, string, bool) {
 }
 func (f *Forge) git(req *http.Request, owner, name, service string, v2 bool, body []byte) ([]byte, bool) {
 	s := f.store
+	if service == upload {
+		s.mu.RLock()
+		if owner == s.login {
+			r := s.repos[name]
+			if r == nil {
+				s.mu.RUnlock()
+				return nil, false
+			}
+			if req.Method == "GET" && v2 {
+				s.mu.RUnlock()
+				return uploadV2, true
+			}
+			if req.Method == "POST" {
+				if reply := r.cachedUpload(body, s.objects.generation); reply != nil {
+					s.mu.RUnlock()
+					return reply, true
+				}
+			}
+		}
+		s.mu.RUnlock()
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	r := s.repo(owner, name)
@@ -176,10 +212,51 @@ func (f *Forge) git(req *http.Request, owner, name, service string, v2 bool, bod
 	if service == receive {
 		return s.gitReceive(r, body), true
 	}
-	return s.gitUpload(r, body), true
+	generation := s.objects.generation
+	if reply := r.cachedUpload(body, generation); reply != nil {
+		return reply, true
+	}
+	reply := s.gitUpload(r, body)
+	r.rememberUpload(body, reply, generation)
+	return reply, true
 }
+
+// A warm issue GET only reads immutable serialized bytes. A cache miss goes
+// through the normal router, which also handles owner binding and mutations.
+func (s *Store) cachedIssue(path string) []byte {
+	owner, name, tail, ok := repoPath(strings.TrimPrefix(path, "/api/v3"))
+	if !ok {
+		return nil
+	}
+	number, ok := strings.CutPrefix(tail, "issues/")
+	if !ok {
+		return nil
+	}
+	id, err := strconv.Atoi(number)
+	if err != nil {
+		return nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if owner != "" && owner == s.login {
+		if r := s.repos[name]; r != nil {
+			if issue := r.issues[id]; issue != nil {
+				return issue.snapshot
+			}
+		}
+	}
+	return nil
+}
+
 func (f *Forge) api(req *http.Request, doc any) (int, []byte, string) {
 	s := f.store
+	if req.Method == "GET" {
+		if _, ok := doc.(M); ok {
+			if reply := s.cachedIssue(req.URL.Path); reply != nil {
+				return 200, reply, ""
+			}
+		}
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	var reply answer

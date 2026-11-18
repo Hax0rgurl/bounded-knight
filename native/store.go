@@ -79,13 +79,15 @@ type Repo struct {
 	serial        int
 	receive       []byte
 	refReplies    map[string][]byte
+	uploadReplies [2]uploadReply
+	nextUpload    int
 }
 type node struct {
 	repo  *Repo
 	value any
 }
 type Store struct {
-	mu              sync.Mutex
+	mu              sync.RWMutex
 	login, now      string
 	seq             int
 	repos           map[string]*Repo
@@ -127,7 +129,11 @@ func (s *Store) repo(owner, name string) *Repo {
 }
 func (s *Store) identify(kind string) Identity {
 	s.seq++
-	return Identity{s.seq, base64.StdEncoding.EncodeToString([]byte(kind + ":" + strconv.Itoa(s.seq)))}
+	var plain [48]byte
+	b := append(plain[:0], kind...)
+	b = strconv.AppendInt(append(b, ':'), int64(s.seq), 10)
+	var encoded [64]byte
+	return Identity{s.seq, string(base64.StdEncoding.AppendEncode(encoded[:0], b))}
 }
 func str(m M, key string) string { v, _ := m[key].(string); return v }
 func flag(m M, key string) bool  { v, _ := m[key].(bool); return v }
@@ -201,7 +207,11 @@ func (r *Repo) setRef(name string, id oid) {
 	}
 	r.refsChanged()
 }
-func (r *Repo) refsChanged() { r.receive = nil; r.refReplies = nil }
+func (r *Repo) refsChanged() {
+	r.receive = nil
+	r.refReplies = nil
+	r.uploadReplies = [2]uploadReply{}
+}
 func (s *Store) tip(r *Repo, ref string) oid {
 	ref = defaultString(ref, r.DefaultBranch)
 	for _, name := range []string{ref, "refs/heads/" + ref, "refs/tags/" + ref} {
