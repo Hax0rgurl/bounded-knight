@@ -2,7 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import math
 import os
@@ -19,17 +19,44 @@ def log_count(value):
     return math.log(max(1, value))
 
 
-def hours_from(timestamp, start):
-    return (datetime.fromisoformat(timestamp) - start).total_seconds() / 3600
+def utc_timestamp(value):
+    if not isinstance(value, str):
+        return None
+    try:
+        timestamp = datetime.fromisoformat(value)
+        if timestamp.tzinfo is not None:
+            return timestamp.astimezone(timezone.utc)
+    except (ValueError, OverflowError):
+        return None
 
 
-def hourly_rows(rows, day_start, *, history_only=False):
-    start = datetime.fromisoformat(day_start)
+def object_rows(rows):
+    if isinstance(rows, list):
+        yield from (row for row in rows if isinstance(row, dict))
+
+
+def count(value):
+    if type(value) in (int, float) and 0 <= value <= 2**53:
+        return value
+    return None
+
+
+def counts(row):
+    return {field: count(row.get(field)) for field in ("viewers", "channels")}
+
+
+def hourly_rows(rows, start, *, history_only=False):
     result = {}
-    for row in rows:
-        offset = hours_from(row["from"], start)
+    for row in object_rows(rows):
+        timestamp = utc_timestamp(row.get("from"))
+        if timestamp is None:
+            continue
+        offset = (timestamp - start).total_seconds() / 3600
         if offset.is_integer() and (not history_only or offset <= 0):
-            result[int(offset)] = row
+            key = int(offset)
+            values = counts(row)
+            if key not in result or result[key]["viewers"] is None:
+                result[key] = values
     return result
 
 
@@ -95,22 +122,28 @@ class Launch:
 def comparable_launches(records):
     launches = {}
     for record in records:
-        name = record["name"]
-        unlock = record.get("unlock") or ""
+        if not isinstance(record, dict):
+            continue
+        name = record.get("name")
+        start = utc_timestamp(record.get("day_start"))
+        if not isinstance(name, str) or not name.strip() or start is None:
+            continue
+        unlock = record.get("unlock")
+        unlock = unlock.strip() if isinstance(unlock, str) else ""
         if "target-history" in unlock.lower() or unlock.lower().startswith("not a launch"):
             continue
-        key = (" ".join(name.casefold().split()), record["day_start"])
-        if key in launches:
-            continue
-        rows = hourly_rows(record["hourly"], record["day_start"])
-        state = snapshot(rows, regime(unlock), record.get("platforms"))
+        key = (" ".join(name.casefold().split()), start.date())
+        rows = hourly_rows(record.get("hourly"), start)
+        platforms = record.get("platforms")
+        state = snapshot(rows, regime(unlock), platforms if isinstance(platforms, str) else None)
         if state.level is None:
             continue
         ratios = {
             h: log_count(rows[h]["viewers"]) - state.level
             for h in HORIZONS if h in rows and rows[h].get("viewers") is not None
         }
-        if ratios:
+        # A damaged early copy should not crowd out a more complete duplicate.
+        if ratios and (key not in launches or len(ratios) > len(launches[key].ratios)):
             launches[key] = Launch(name, state, ratios)
     return list(launches.values())
 
@@ -231,16 +264,23 @@ def forecast_logs(target, launches, horizons, minute_trend=0.0, fallback=0.0):
         yield h, [level + quantile(components, p) for p in probabilities]
 
 
-def first_hour_trend(case):
-    start = datetime.fromisoformat(case["day_start"])
-    early, late = [], []
-    for row in case.get("history") or []:
-        offset = hours_from(row["at"], start)
-        if row.get("viewers") is not None:
-            if 0 <= offset < 1 / 3:
-                early.append(log_count(row["viewers"]))
-            elif 2 / 3 <= offset < 1:
-                late.append(log_count(row["viewers"]))
+def first_hour_reads(history, start):
+    minutes = {}
+    for row in object_rows(history):
+        timestamp = utc_timestamp(row.get("at"))
+        if timestamp is None:
+            continue
+        seconds = (timestamp - start).total_seconds()
+        if 0 <= seconds < 3600:
+            values = counts(row)
+            if values["viewers"] is not None:
+                minutes.setdefault(int(seconds // 60), values)
+    return minutes
+
+
+def first_hour_trend(minutes):
+    early = [log_count(row["viewers"]) for minute, row in minutes.items() if minute < 20]
+    late = [log_count(row["viewers"]) for minute, row in minutes.items() if minute >= 40]
     if min(len(early), len(late)) < 5:
         return 0.0
     return max(-0.30, min(0.30, 0.5 * (median(late) - median(early))))
@@ -252,22 +292,27 @@ def viewer_quantiles(values):
 
 
 def forecast_case(case):
-    launches = comparable_launches(case.get("comparables") or [])
-    rows = hourly_rows(case.get("history_hourly") or [], case["day_start"], history_only=True)
-    first = next((row for row in case["known"] if row["hour"] == 1), {})
-    if first.get("viewers") is not None:
+    records = object_rows(case.get("comparables"))
+    launches = comparable_launches(records)
+    start = datetime.fromisoformat(case["day_start"])
+    rows = hourly_rows(case.get("history_hourly"), start, history_only=True)
+    minutes = first_hour_reads(case.get("history"), start)
+    first = next((counts(row) for row in object_rows(case.get("known"))
+                  if row.get("hour") == 1 and count(row.get("viewers")) is not None), None)
+    if first is not None:
         rows[0] = first
-    notes = case.get("notes") or ""
-    kind = regime(notes.split("real unlock:")[-1])
-    # The contest specifies rolling local-midnight unlocks for its target and
-    # practice cases. Use that schedule if the case omits explicit prose.
-    kind = "rolling" if kind == "unknown" else kind
-    state = snapshot(rows, kind, "console")
-    previous = [log_count(rows[h]["viewers"]) for h in sorted(rows)[-6:]
-                if rows[h].get("viewers") is not None]
-    fallback = median(previous) if previous else 0.0
+    elif rows.get(0, {}).get("viewers") is None and minutes:
+        rows[0] = {}
+        for field in ("viewers", "channels"):
+            readings = [row[field] for row in minutes.values() if row[field] is not None]
+            rows[0][field] = math.floor(sum(readings) / len(readings) + 0.5) if readings else None
+    # The rules specify console launches with rolling local-midnight unlocks.
+    state = snapshot(rows, "rolling", "console")
+    previous = [log_count(row["viewers"]) for _, row in sorted(rows.items())
+                if row["viewers"] is not None]
+    fallback = median(previous[-6:]) if previous else 0.0
     logs = forecast_logs(state, launches, (r["hour"] - 1 for r in case["forecast"]),
-                         first_hour_trend(case), fallback)
+                         first_hour_trend(minutes), fallback)
     return {"hours": [
         {"hour": h + 1, "q": viewer_quantiles(values)}
         for h, values in logs
@@ -276,7 +321,7 @@ def forecast_case(case):
 
 def backtest(paths):
     records = (record for path in paths
-               for record in json.loads(path.read_text(encoding="utf-8"))["comparables"])
+               for record in object_rows(json.loads(path.read_text(encoding="utf-8")).get("comparables")))
     launches = comparable_launches(records)
     if len(launches) < 2:
         raise SystemExit("Backtesting requires at least two distinct launches.")
