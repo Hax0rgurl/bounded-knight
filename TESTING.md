@@ -60,3 +60,9 @@ The attempted TCP launch here failed before binding with `listen EPERM:
 operation not permitted 127.0.0.1`. Network timings, real connection reuse, the
 registration lifecycle against a running env, container grading, and official
 live/replay equivalence remain unverified. No submission or packaging was done.
+
+The submission coordinator subsequently tested the final source over loopback TCP
+on Node 22.18.0, starting both the unmodified kit environment and the production
+entrypoint. The entry registered and exited successfully after all 120 checks
+and four benchmarks. The environment awarded 156/200 performance points in that
+run for a local total of 956/1000.
