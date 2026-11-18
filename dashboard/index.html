@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Faultline · Token Launch Radar</title>
+  <link rel="stylesheet" href="app.css">
+  <script defer src="../data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./"><span class="mark" aria-hidden="true">◈</span> FAULTLINE</a>
+    <span class="header-label">Protocol research</span>
+    <div class="header-right"><span id="snapshot"></span><button id="method-button">Methodology ↗</button></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">DEFI / PRE-LAUNCH RESEARCH</p><h1>Token Launch Radar</h1>
+      <p class="deck">Peer-priced scenarios and farming research for protocols with no token recorded.</p></div>
+      <div class="stats" id="stats"></div>
+    </section>
+    <section class="market" id="market" aria-labelledby="chart-title">
+      <div class="chart-main">
+        <div class="chart-head"><div><h2 id="chart-title">Valuation distribution</h2><p id="chart-subtitle">Protocol count by implied market cap · logarithmic USD bands</p></div>
+        <div class="legend"><span><i></i>Watchlist</span><span><i></i>Expanded scan</span></div></div>
+        <div id="chart" class="chart" aria-describedby="chart-subtitle"></div>
+      </div>
+      <aside class="chart-note"><p class="eyebrow">HOW TO READ IT</p><h2>Value is conditional.</h2>
+        <p>Estimates assume a launch at today’s snapshot scale. Ranges reflect peer dispersion and thin or missing evidence.</p>
+        <p>Token status and campaign eligibility are unverified.</p>
+      </aside>
+    </section>
+    <section class="board" aria-labelledby="board-title">
+      <div class="board-head"><h2 id="board-title">Protocol board</h2><div class="tabs" aria-label="Protocol universe">
+        <button id="early" aria-pressed="true">Launch radar</button><button id="recorded" aria-pressed="false">Token recorded</button>
+      </div></div>
+      <div class="filters">
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" aria-label="Search protocols" placeholder="Search protocols…"></label>
+        <select id="category" aria-label="Category"></select>
+        <select id="chain" aria-label="Chain"></select>
+        <label class="toggle" id="watch-control"><input type="checkbox" id="watch"> Watchlist only</label>
+        <button class="reset" id="reset">Reset filters</button>
+      </div>
+      <div class="results" id="results" role="status"></div>
+      <div class="table-wrap"><table><thead id="head"></thead><tbody id="rows"></tbody></table></div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+    <footer id="source"></footer>
+  </main>
+  <dialog id="panel" aria-labelledby="panel-title">
+    <div class="panel-top"><span id="panel-label" class="eyebrow"></span><button id="close" aria-label="Close dialog" autofocus>×</button></div>
+    <div id="panel-content"></div>
+  </dialog>
+</body>
+</html>
