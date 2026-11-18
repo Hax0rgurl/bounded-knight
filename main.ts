@@ -18,7 +18,7 @@
 
 import { createApp } from './app.ts';
 
-process.title = 'relay-git-forge';
+process.title = 'goof-git-forge';
 
 const ENV_URL = (process.env.MAKEFUN_ENV_URL ?? '').replace(/\/+$/, '');
 if (ENV_URL === '') {

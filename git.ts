@@ -1,5 +1,11 @@
 import { ZERO, packets, lines } from './objects.ts';
 
+const V2_ADVERTISEMENT = lines([
+  'version 2\n', 'agent=relay/1\n', 'ls-refs=unborn\n',
+  'fetch=shallow\n', 'object-format=sha1\n', null,
+]);
+const fetchCaches = new WeakMap();
+
 export function validRef(ref) {
   return typeof ref === 'string' && ref.startsWith('refs/') &&
     !/[\x00-\x20\x7f~^:?*\[\\]/.test(ref) && !ref.includes('..') &&
@@ -18,10 +24,7 @@ export function git(store, repo, service, method, body, version) {
 
   if (method === 'GET') {
     if (service === 'git-upload-pack' && version === 2) {
-      return result(lines([
-        'version 2\n', 'agent=relay/1\n', 'ls-refs=unborn\n',
-        'fetch=shallow\n', 'object-format=sha1\n', null,
-      ]));
+      return result(V2_ADVERTISEMENT);
     }
     const advertisement = [`# service=${service}\n`, null];
     const list = refs();
@@ -107,28 +110,46 @@ export function git(store, repo, service, method, body, version) {
   const values = prefix => text.filter(line => line.startsWith(prefix + ' ')).map(line => line.split(' ')[1]);
   const wants = values('want'), haves = values('have'), shallow = values('shallow');
   const depth = Number(values('deepen')[0]) || Infinity;
-  const known = new Set();
-  for (const have of haves) {
-    if (shallow.length) {
-      known.add(have);
-      const commit = objects.commit(have);
-      if (commit) for (const id of objects.closure([commit.tree]).ids) known.add(id);
-    } else for (const id of objects.closure([have]).ids) known.add(id);
+  const v2 = text.includes('command=fetch');
+  // The object IDs and depth describe the requested closure. Its exclusions
+  // and shallow boundaries also affect the pack and the surrounding protocol.
+  // Invalidate on growth so even a formerly incomplete closure is rebuilt.
+  let cache, key;
+  if (wants.length + haves.length + shallow.length <= 64) {
+    cache = fetchCaches.get(objects);
+    if (cache?.generation !== objects.generation) {
+      cache = { generation: objects.generation, replies: new Map(), bytes: 0 };
+      fetchCaches.set(objects, cache);
+    }
+    key = JSON.stringify([repo.id, v2, String(depth), wants, haves, shallow]);
+    const hit = cache.replies.get(key);
+    if (hit) return result(hit);
   }
+  const known = objects.closure(haves, Infinity, new Set(shallow)).ids;
   // Traverse held shallow commits to extend ancestry, then exclude the client's held bytes.
   const { ids, boundary } = objects.closure(wants, depth);
+  const visited = new Set(shallow.filter(id => ids.has(id)));
   for (const id of known) ids.delete(id);
   const pack = objects.pack(ids), answer = [];
-  const v2 = text.includes('command=fetch');
-  if (boundary.length || shallow.length) {
+  if (boundary.length || visited.size) {
     if (v2) answer.push('shallow-info\n');
     for (const id of boundary) answer.push(`shallow ${id}\n`);
-    for (const id of shallow) if (!boundary.includes(id)) answer.push(`unshallow ${id}\n`);
+    for (const id of shallow) if (visited.has(id) && !boundary.includes(id)) answer.push(`unshallow ${id}\n`);
     answer.push(v2 ? 1 : null);
   }
   answer.push(v2 ? 'packfile\n' : 'NAK\n');
   for (let offset = 0; offset < pack.length; offset += 65515) {
     answer.push(Buffer.concat([Buffer.from([1]), pack.subarray(offset, offset + 65515)]));
   }
-  return result(lines([...answer, null]));
+  const reply = lines([...answer, null]);
+  if (cache && key.length <= 8192 && reply.length <= 256 * 1024) {
+    while (cache.replies.size >= 32 || cache.bytes + reply.length > 512 * 1024) {
+      const oldest = cache.replies.keys().next().value;
+      cache.bytes -= cache.replies.get(oldest).length;
+      cache.replies.delete(oldest);
+    }
+    cache.replies.set(key, reply);
+    cache.bytes += reply.length;
+  }
+  return result(reply);
 }

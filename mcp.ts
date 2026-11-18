@@ -30,7 +30,7 @@ export function mcp(store, request) {
     result = {
       protocolVersion: legacy ? request.params.protocolVersion : '2026-07-28',
       supportedVersions: ['2026-07-28', '2025-11-25'],
-      serverInfo: { name: 'Relay Git Forge', version: '1.0.0' },
+      serverInfo: { name: 'GOOF Git Forge', version: '1.0.0' },
       capabilities: { tools: { listChanged: false } },
     };
   } else if (request.method === 'notifications/initialized') return null;

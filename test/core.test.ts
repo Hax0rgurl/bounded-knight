@@ -195,3 +195,48 @@ test('invalid Git ref names are refused', () => {
   for (const ref of ['refs/heads/../x', 'refs/heads/a.lock', 'refs/heads/a b', 'refs/heads/.hidden', 'HEAD']) assert.equal(validRef(ref), false);
   assert.equal(validRef('refs/heads/feature/useful'), true);
 });
+
+test('cached issue reads reflect GraphQL mutations and REST comments', () => {
+  const { store, repo } = fixture();
+  const issue = store.issue(repo, { title: 'Track changes' });
+  const route = '/api/v3/repos/octopus/garden/issues/' + issue.number;
+  const read = () => JSON.parse(store.rest('GET', route).serialized.toString());
+  assert.equal(read().state, 'open');
+  const result = graphql(store, {
+    query: 'mutation { closeIssue(input: {issueId: "' + issue.node_id + '"}) { issue { state } } }',
+  });
+  assert.equal(result.data.closeIssue.issue.state, 'CLOSED');
+  assert.equal(read().state, 'closed');
+  store.rest('POST', route + '/comments', { body: 'Acknowledged' });
+  assert.equal(read().comments, 1);
+});
+
+test('fetch cache keeps distinct wants and traverses shared ancestry by shortest distance', () => {
+  const { store, repo, files, root } = fixture();
+  const parent = store.objects.makeCommit(files, [root], 'Parent');
+  const child = store.objects.makeCommit(files, [parent], 'Child');
+  const fetch = (wants, depth) => git(store, repo, 'git-upload-pack', 'POST', lines([
+    'command=fetch\n', 1, ...wants.map(id => 'want ' + id + '\n'), 'deepen ' + depth + '\n', 'done\n', null,
+  ]), 2).body;
+  const first = fetch([child], 2);
+  assert.equal(fetch([child], 2), first);
+  const second = fetch([parent, child], 2);
+  assert.notDeepEqual(second, first);
+  assert.ok(store.objects.closure([parent, child], 2).ids.has(root));
+  assert.ok(!store.objects.closure([child], 2).ids.has(root));
+  assert.equal(fetch([parent, child], 2), second);
+});
+
+test('a fetch cache miss rebuilds a closure after a missing object arrives', () => {
+  const { store, repo } = fixture();
+  const blob = hash(Buffer.from('blob 4\0late'));
+  const tip = store.objects.makeCommit(new Map([['late.txt', { sha: blob }]]), [], 'With late blob');
+  const request = lines(['command=fetch\n', 1, 'want ' + tip + '\n', 'done\n', null]);
+  const fetch = () => git(store, repo, 'git-upload-pack', 'POST', request, 2).body;
+  const before = fetch();
+  assert.equal(fetch(), before);
+  assert.equal(store.objects.put('blob', 'late'), blob);
+  const after = fetch();
+  assert.notDeepEqual(after, before);
+  assert.equal(fetch(), after);
+});

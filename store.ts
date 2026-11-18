@@ -7,11 +7,14 @@ export class HttpError extends Error {
 export const fail = (status, message) => { throw new HttpError(status, message); };
 const response = (body, status = 200, headers = {}) => ({ status, body, headers });
 const notFound = () => fail(404, 'Not Found');
+const EMPTY_QUERY = new URLSearchParams();
 
 export class Store {
   objects = new Objects();
   repos = new Map();
   nodes = new Map();
+  issueSnapshots = new Map();
+  issueSnapshotBytes = 0;
   next = 1;
   login = process.env.FORGE_LOGIN || null;
   now = process.env.MAKEFUN_TRIAL_NOW || '2026-01-01T00:00:00.000Z';
@@ -93,7 +96,39 @@ export class Store {
       body: input.body, user: this.user(), created_at: this.now, updated_at: this.now,
     }, 'Comment');
     issue.commentList.push(comment); issue.comments++;
+    this.invalidateIssue(issue);
     return comment;
+  }
+
+  updateIssue(issue, input) {
+    if (input.state && !['open', 'closed'].includes(input.state)) fail(422, 'Invalid issue state');
+    for (const key of ['state', 'title', 'body']) if (key in input) issue[key] = input[key];
+    issue.updated_at = this.now;
+    this.invalidateIssue(issue);
+    return issue;
+  }
+
+  invalidateIssue(issue) {
+    const old = this.issueSnapshots.get(issue);
+    if (old) {
+      this.issueSnapshotBytes -= old.length;
+      this.issueSnapshots.delete(issue);
+    }
+  }
+
+  readIssue(issue) {
+    let serialized = this.issueSnapshots.get(issue);
+    if (!serialized) {
+      serialized = Buffer.from(JSON.stringify(issue));
+      if (serialized.length <= 64 * 1024) {
+        while (this.issueSnapshots.size >= 1024 || this.issueSnapshotBytes + serialized.length > 1024 * 1024) {
+          this.invalidateIssue(this.issueSnapshots.keys().next().value);
+        }
+        this.issueSnapshots.set(issue, serialized);
+        this.issueSnapshotBytes += serialized.length;
+      }
+    }
+    return { ...response(issue), serialized };
   }
 
   pull(repo, input) {
@@ -160,7 +195,7 @@ export class Store {
     };
   }
 
-  rest(method, path, body = {}, query = new URLSearchParams()) {
+  rest(method, path, body = {}, query = EMPTY_QUERY) {
     let parts;
     try { parts = path.split('/').filter(Boolean).map(decodeURIComponent); }
     catch { fail(400, 'Invalid URL encoding'); }
@@ -198,6 +233,7 @@ export class Store {
         this.repos.delete(repo.name);
         this.nodes.delete(repo.node_id);
         for (const issue of repo.issues.values()) {
+          this.invalidateIssue(issue);
           this.nodes.delete(issue.node_id);
           for (const comment of issue.commentList) this.nodes.delete(comment.node_id);
         }
@@ -270,12 +306,8 @@ export class Store {
         if (method === 'GET') return page(issue.commentList);
       }
       if (tail.length === 2) {
-        if (method === 'PATCH') {
-          if (body.state && !['open', 'closed'].includes(body.state)) fail(422, 'Invalid issue state');
-          for (const key of ['state', 'title', 'body']) if (key in body) issue[key] = body[key];
-          issue.updated_at = this.now;
-        }
-        if (method === 'GET' || method === 'PATCH') return response(issue);
+        if (method === 'PATCH') return response(this.updateIssue(issue, body));
+        if (method === 'GET') return this.readIssue(issue);
       }
     }
     if (tail[0] === 'pulls') {

@@ -1,8 +1,8 @@
-import { createHash } from 'node:crypto';
+import { hash as digest } from 'node:crypto';
 import { deflateSync, inflateSync } from 'node:zlib';
 
 export const ZERO = '0'.repeat(40);
-export const hash = bytes => createHash('sha1').update(bytes).digest('hex');
+export const hash = bytes => digest('sha1', bytes, 'hex');
 const TYPES = { 1: 'commit', 2: 'tree', 3: 'blob', 4: 'tag' };
 const TYPE_CODES = { commit: 1, tree: 2, blob: 3, tag: 4 };
 const TREE_LEAF = Symbol('file');
@@ -17,8 +17,18 @@ export function pkt(bytes) {
 
 /** null is flush, 1 is the v2 section delimiter. */
 export function lines(values) {
-  return Buffer.concat(values.map(value => value === null
-    ? Buffer.from('0000') : value === 1 ? Buffer.from('0001') : pkt(value)));
+  const payloads = values.map(value => typeof value === 'string' ? Buffer.from(value) : value);
+  const size = payloads.reduce((total, value) => total + 4 + (value?.length ?? 0), 0);
+  const result = Buffer.allocUnsafe(size);
+  let offset = 0;
+  for (const value of payloads) {
+    const length = value === null ? 0 : value === 1 ? 1 : value.length + 4;
+    if (length > 65520) throw Error('Packet exceeds 65520 bytes');
+    result.write(length.toString(16).padStart(4, '0'), offset, 4, 'ascii');
+    offset += 4;
+    if (Buffer.isBuffer(value)) { value.copy(result, offset); offset += value.length; }
+  }
+  return result;
 }
 
 /** Receive-pack's binary pack follows the command-list flush. */
@@ -49,12 +59,16 @@ export function packets(bytes) {
 export class Objects {
   items = new Map();
   packed = new Map();
+  generation = 0;
 
   put(type, input) {
     if (!TYPE_CODES[type]) throw Error('Unsupported object type');
     const data = Buffer.from(input);
     const sha = hash(Buffer.concat([Buffer.from(`${type} ${data.length}\0`), data]));
-    if (!this.items.has(sha)) this.items.set(sha, { type, data });
+    if (!this.items.has(sha)) {
+      this.items.set(sha, { type, data });
+      this.generation++;
+    }
     return sha;
   }
 
@@ -63,10 +77,11 @@ export class Objects {
   commit(id) {
     const object = this.get(id);
     if (!object || object.type !== 'commit') return null;
+    if (object.commit) return object.commit;
     const raw = object.data.toString();
     const split = raw.indexOf('\n\n');
     const headers = raw.slice(0, split);
-    return {
+    return object.commit = {
       tree: headers.match(/^tree (\w+)/m)?.[1],
       parents: [...headers.matchAll(/^parent (\w+)/gm)].map(match => match[1]),
       message: raw.slice(split + 2), raw,
@@ -74,8 +89,10 @@ export class Objects {
   }
 
   entries(id) {
-    const data = this.get(id)?.data;
-    if (!data) return [];
+    const object = this.get(id);
+    if (!object) return [];
+    if (object.entries) return object.entries;
+    const data = object.data;
     let offset = 0;
     const entries = [];
     while (offset < data.length) {
@@ -89,7 +106,7 @@ export class Objects {
       });
       offset = zero + 21;
     }
-    return entries;
+    return object.entries = entries;
   }
 
   files(id) {
@@ -172,27 +189,33 @@ export class Objects {
     return null;
   }
 
-  closure(tips, depth = Infinity, stop = new Set()) {
+  closure(tips, depth = Infinity, shallow = new Set()) {
     const ids = new Set(), boundary = [];
-    const visit = (id, generation) => {
-      if (ids.has(id) || stop.has(id)) return;
-      const object = this.get(id);
-      if (!object) return;
-      ids.add(id);
-      if (object.type === 'commit') {
-        const commit = this.commit(id);
-        visit(commit.tree, generation);
-        if (generation < depth) for (const parent of commit.parents) visit(parent, generation + 1);
-        else if (commit.parents.length) boundary.push(id);
-      } else if (object.type === 'tree') {
-        for (const entry of this.entries(id)) {
-          if (entry.mode !== '160000') visit(entry.sha, generation);
+    // Exhaust each commit generation before reading parents. A commit reachable
+    // along two routes belongs at its shortest distance from any wanted tip.
+    let current = [...tips], next = [], generation = 1;
+    while (current.length) {
+      const id = current.pop();
+      if (!ids.has(id)) {
+        const object = this.get(id);
+        if (object) {
+          ids.add(id);
+          if (object.type === 'commit') {
+            const commit = this.commit(id);
+            current.push(commit.tree);
+            if (generation < depth && !shallow.has(id)) next.push(...commit.parents);
+            else if (commit.parents.length) boundary.push(id);
+          } else if (object.type === 'tree') {
+            for (const entry of this.entries(id)) {
+              if (entry.mode !== '160000') current.push(entry.sha);
+            }
+          } else if (object.type === 'tag') {
+            current.push(object.data.toString().match(/^object (\w+)/)?.[1]);
+          }
         }
-      } else if (object.type === 'tag') {
-        visit(object.data.toString().match(/^object (\w+)/)?.[1], generation);
       }
-    };
-    for (const tip of tips) visit(tip, 1);
+      if (!current.length) { current = next; next = []; generation++; }
+    }
     return { ids, boundary };
   }
 
@@ -252,7 +275,13 @@ export class Objects {
         if (offset + 20 >= trailer) throw Error('Truncated delta base');
         base = bytes.subarray(offset, offset + 20).toString('hex'); offset += 20;
       }
-      const result = inflateSync(bytes.subarray(offset, trailer), { info: true, maxOutputLength: MAX_INFLATED });
+      // A small output buffer avoids the default 16 KiB allocation for every
+      // tiny object. Cap the first allocation even if the pack claims a huge size.
+      const result = inflateSync(bytes.subarray(offset, trailer), {
+        info: true,
+        chunkSize: Math.max(64, Math.min(16384, size + 1)),
+        maxOutputLength: Math.max(1, size),
+      });
       offset += result.engine.bytesWritten;
       inflatedBytes += result.buffer.length;
       if (result.buffer.length !== size || inflatedBytes > MAX_INFLATED) throw Error('Pack object size limit');
@@ -284,7 +313,13 @@ export class Objects {
     };
     for (const entry of entries) resolve(entry);
     // A malformed pack never partially inserts objects or moves any ref.
-    for (const [id, object] of staged) if (!this.items.has(id)) this.items.set(id, object);
+    for (const [id, object] of staged) {
+      if (this.items.has(id)) continue;
+      // Node's zlib output is a view over its work buffer. Retain only the object.
+      object.data = Buffer.from(object.data);
+      this.items.set(id, object);
+      this.generation++;
+    }
   }
 }
 

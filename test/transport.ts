@@ -7,6 +7,9 @@ export function handlerFetch(server) {
     const headers = Object.fromEntries(new Headers(init.headers || {}));
     headers.host = url.host;
     const payload = init.body == null ? Buffer.alloc(0) : Buffer.from(init.body);
+    if (payload.length && !headers['transfer-encoding'] && !headers['content-length']) {
+      headers['content-length'] = String(payload.length);
+    }
     const request = Readable.from(payload.length ? [payload] : []);
     Object.assign(request, { url: url.pathname + url.search, method: init.method || 'GET', headers });
     return new Promise((resolve, reject) => {

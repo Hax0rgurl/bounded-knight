@@ -127,7 +127,7 @@ export function graphql(store, document) {
       if (name === 'closeIssue') {
         object = store.nodes.get(input.issueId);
         if (!object || !findRepo(object)?.issues.has(object.number)) fail(404, 'Issue not found');
-        object.state = 'closed';
+        store.updateIssue(object, { state: 'closed' });
         return { issue: wrap(object, 'Issue', findRepo(object)) };
       }
       if (name === 'createPullRequest') {

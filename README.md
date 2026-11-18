@@ -1,4 +1,4 @@
-# Relay Git Forge
+# GOOF Git Forge
 
 [![make.fun competition](https://make.fun/badge/github-core-clone-01.svg)](https://make.fun/bounty/github-core-clone-01)
 [![Rank](https://make.fun/badge/github-core-clone-01/Hax0rgurl/bounded-knight/rank.svg)](https://make.fun/bounty/github-core-clone-01)
@@ -11,7 +11,7 @@ One in-memory SHA-1 object store connects Git smart HTTP (upload-pack v2/v0,
 receive-pack v0), REST `/api/v3`, GraphQL `/api/graphql`, and MCP `/mcp`.
 It supports shallow fetches, delta-pack ingestion, per-ref fast-forward checks,
 contents commits, issues, comments, labels, PR files, and conflict-aware squash merges.
-Compressed object bytes are cached for repeated fetches.
+Compressed objects and bounded fetch responses are cached for repeated fetches.
 
 Run locally, with a disposable development token:
 
@@ -34,7 +34,7 @@ node test/core.test.ts
 node test/public-suite.ts /path/to/github-core-clone-01-kit --perf
 ```
 
-**Verified on Node 22.18.0:** 120/120 published checks and 14/14 additional tests.
+**Verified on Node 22.18.0:** 120/120 published checks and 17/17 additional tests.
 The published suite ran unchanged through a socket-free adapter into the real HTTP
 handler because this build sandbox rejects TCP listeners (`listen EPERM`). All four
 published benchmark workloads completed; adapter timings exclude network overhead

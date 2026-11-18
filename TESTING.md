@@ -66,3 +66,42 @@ on Node 22.18.0, starting both the unmodified kit environment and the production
 entrypoint. The entry registered and exited successfully after all 120 checks
 and four benchmarks. The environment awarded 156/200 performance points in that
 run for a local total of 956/1000.
+
+## GOOF performance iteration
+
+The same Node 22.18.0 runtime and unmodified published runner drove three
+baseline and three optimized runs. Both builds used the same socket-free
+adapter with HTTP body framing headers. Each value is the median of three
+workload medians. The original live score supplied for this iteration was
+123/200 performance and 588,034 µs at rank 4,632.
+
+| Workload | Baseline (ms) | GOOF (ms) | Reduction |
+| --- | ---: | ---: | ---: |
+| 200 pushes | 197.520 | 140.274 | 29% |
+| 50 concurrent shallow clones | 34.043 | 21.444 | 37% |
+| 2,000 issue reads | 203.676 | 121.054 | 41% |
+| 200 issue writes | 20.058 | 13.761 | 31% |
+
+The geometric mean fell from 72,396 to 47,313 µs in the adapter. All measured
+runs passed 120/120 published checks. The expanded unit suite passed 17/17.
+
+V8 profiles of the full runner include both client and service costs. In the
+baseline, garbage collection accounted for 148/2,329 samples and native zlib
+processing for 112/2,329. In an optimized capture, the counts were 76/1,634 and
+92/1,634 respectively. Zlib remained prominent after allocation work. The
+forge uses Node's native zlib with a bounded initial buffer based on the
+declared object size and uses Node's one-shot native SHA-1. There is no custom
+native addon.
+
+Fetch replies are reused by repository, wanted and held object IDs, shallow
+boundaries, depth and protocol. New objects invalidate the bounded cache since
+they can complete a previously missing edge. Pack encoding shares compressed
+object bytes. Parsed commit and tree metadata is cached on immutable objects,
+and traversal visits ancestry by generation. The HTTP handler avoids stream
+iteration for unframed empty bodies and reuses single body buffers. Individual
+issue reads reuse a bounded serialized snapshot invalidated by writes and
+repository deletion.
+
+The TCP listener still returned `EPERM` for this iteration. The table measures
+the in-process workload only. The coordinator's network run can establish
+actual scores and placement.
