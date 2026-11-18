@@ -1,0 +1,65 @@
+{
+  "runtime": "Node.js 22.18.0",
+  "transport": "In-process HTTP handler adapter; no TCP sockets. Published suite source unchanged.",
+  "conformance": {
+    "registered": 120,
+    "manifest_total": 120,
+    "passed": 120,
+    "mcp_passed": 15,
+    "by_group": {
+      "git": {
+        "passed": 30,
+        "total": 30
+      },
+      "repos": {
+        "passed": 15,
+        "total": 15
+      },
+      "issues": {
+        "passed": 15,
+        "total": 15
+      },
+      "pulls": {
+        "passed": 20,
+        "total": 20
+      },
+      "protocol": {
+        "passed": 5,
+        "total": 5
+      },
+      "graphql": {
+        "passed": 20,
+        "total": 20
+      },
+      "mcp": {
+        "passed": 15,
+        "total": 15
+      }
+    }
+  },
+  "additional_tests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "workload_validation": {
+    "completed": [
+      "push",
+      "clone",
+      "read",
+      "write"
+    ],
+    "rounds_each": 3,
+    "warmups_each": 5,
+    "adapter_p50_ms": {
+      "push": 258.113,
+      "clone": 29.005,
+      "read": 261.989,
+      "write": 17.299
+    }
+  },
+  "limitations": [
+    "TCP listener rejected by sandbox: listen EPERM 127.0.0.1.",
+    "Adapter benchmark timings exclude network overhead; no official performance score established.",
+    "No container grading, submission, publishing or commits performed."
+  ]
+}
