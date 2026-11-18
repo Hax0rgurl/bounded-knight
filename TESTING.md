@@ -156,3 +156,33 @@ hits under a shared read lock. Reply reuse checks the object-store generation,
 and ref changes discard the repository's cached replies. Uncached requests
 still use the existing protocol parser and semantic caches. These timings
 measure the handler and omit TCP and client overhead.
+
+### Small push allocation follow-up
+
+The native small-push benchmark sends a real receive-pack POST through the
+production handler with a new commit, tree, and roughly 1 KiB blob per update.
+The parallel variant uses independent stores while sharing the process-wide
+inflater pool. It checks the ref status on every push. Measurements below
+are medians of five runs per revision with Go 1.27.4 and four Go workers.
+
+| Receive-pack benchmark | Before | After | Bytes/op before → after | Allocations/op before → after |
+| --- | ---: | ---: | ---: | ---: |
+| Sequential | 15.19 µs | 15.22 µs | 4,360 → 3,667 | 45 → 31 |
+| Parallel | 8.49 µs | 8.45 µs | 4,407 → 3,699 | 45 → 31 |
+
+The baseline already pooled zlib readers across packs. The allocation profile
+showed unpack bookkeeping and compressed-entry copies among the largest costs.
+The updated pool also reuses its input reader and small entry table. Returning
+it clears request references. Small packs share a single allocation for
+their verified compressed entries, and receive-pack builds status output
+with less temporary allocation. Small inflation requires the exact declared
+size and verified zlib EOF. Large inflation grows with actual output up to the
+declared limit plus one byte.
+
+Allocation counts fell 31% and bytes allocated fell about 16%. Wall times
+were effectively flat, and DEFLATE remained the leading CPU cost in both
+profiles. These measurements exclude network overhead.
+
+Native tests, the race run with parallel pushes, and `go vet` passed. The
+unchanged public suite passed 120/120 through the native HTTP handler, and
+two builds via `build.sh` produced byte-identical Linux amd64 binaries.

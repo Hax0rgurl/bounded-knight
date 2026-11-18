@@ -344,7 +344,7 @@ func (o *objects) connected(tip oid) bool {
 	return true
 }
 
-var inflatePool sync.Pool
+var inflatePool = sync.Pool{New: func() any { return new(packInflater) }}
 var deflatePool sync.Pool
 
 const maxInflated = 256 << 20
@@ -355,9 +355,62 @@ type packedEntry struct {
 	kind          byte
 	data, encoded []byte
 	base          int
+	start         int
 	ref           oid
 	id            oid
 	obj           *object
+}
+
+type packInflater struct {
+	input   bytes.Reader
+	reader  io.ReadCloser
+	entries [8]packedEntry
+}
+
+func (p *packInflater) release() {
+	if p.reader != nil {
+		p.reader.Close()
+	}
+	// zlib and flate retain a pointer to input after Close. Clear the
+	// bytes.Reader so a pooled inflater never pins or retains a request body.
+	p.input.Reset(nil)
+	clear(p.entries[:])
+	inflatePool.Put(p)
+}
+
+func (p *packInflater) inflate(size int) ([]byte, error) {
+	var err error
+	if p.reader == nil {
+		p.reader, err = zlib.NewReader(&p.input)
+	} else {
+		err = p.reader.(zlib.Resetter).Reset(&p.input, nil)
+	}
+	if err != nil {
+		return nil, badPack
+	}
+	if size <= 32<<10 {
+		// Read one extra byte to require a real EOF, which zlib reports
+		// only after reading and verifying its checksum.
+		data := make([]byte, size+1)
+		for n := 0; n <= size; {
+			got, err := p.reader.Read(data[n:])
+			n += got
+			if err == io.EOF && n == size {
+				return data[:size:size], nil
+			}
+			if err != nil || got == 0 {
+				break
+			}
+		}
+		return nil, badPack
+	}
+	// Do not reserve a large buffer based on an unverified pack header.
+	// Stop after at most size+1 output bytes and verify the exact size.
+	data, err := io.ReadAll(io.LimitReader(p.reader, int64(size)+1))
+	if err != nil || len(data) != size {
+		return nil, badPack
+	}
+	return data, nil
 }
 
 func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
@@ -373,26 +426,29 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 	if count > (len(payload)-12)/7 {
 		return nil, badPack
 	}
-	entries := make([]packedEntry, count)
+	if count == 0 {
+		if len(payload) != 12 {
+			return nil, badPack
+		}
+		return nil, nil
+	}
+	inflater := inflatePool.Get().(*packInflater)
+	defer inflater.release()
+	var entries []packedEntry
+	if count <= len(inflater.entries) {
+		entries = inflater.entries[:count]
+	} else {
+		entries = make([]packedEntry, count)
+	}
 	var offsets map[int]int
 	// OFS deltas are uncommon. Allocate the offset index only when one occurs.
-	starts := make([]int, count)
 	staged := make(map[oid]*object, count)
-	r := bytes.NewReader(payload[12:])
-	var inflater io.ReadCloser
-	if v := inflatePool.Get(); v != nil {
-		inflater = v.(io.ReadCloser)
-	}
-	defer func() {
-		if inflater != nil {
-			inflater.Close()
-			inflatePool.Put(inflater)
-		}
-	}()
+	r := &inflater.input
+	r.Reset(payload[12:])
 	total := 0
-	stage := func(e *packedEntry, k byte, data []byte) error {
+	stage := func(e *packedEntry, k byte, data []byte) (bool, error) {
 		if len(data) > maxInflated-total {
-			return badPack
+			return false, badPack
 		}
 		total += len(data)
 		e.id = objectID(k, data)
@@ -403,13 +459,14 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 		if e.obj == nil {
 			e.obj = &object{kind: k, data: data}
 			staged[e.id] = e.obj
+			return true, nil
 		}
-		return nil
+		return false, nil
 	}
 	unresolved := 0
 	for i := range entries {
 		start := len(payload) - r.Len()
-		starts[i] = start
+		entries[i].start = start
 		b, err := r.ReadByte()
 		if err != nil {
 			return nil, badPack
@@ -426,7 +483,7 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 			}
 			n |= int(b&127) << shift
 		}
-		if n > maxInflated-total {
+		if n < 0 || n > maxInflated-total {
 			return nil, badPack
 		}
 		e := &entries[i]
@@ -449,7 +506,7 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 			if offsets == nil {
 				offsets = make(map[int]int, i)
 				for index := 0; index < i; index++ {
-					offsets[starts[index]] = index
+					offsets[entries[index].start] = index
 				}
 			}
 			index, ok := offsets[start-distance]
@@ -467,29 +524,18 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 		if offsets != nil {
 			offsets[start] = i
 		}
-		if inflater == nil {
-			inflater, err = zlib.NewReader(r)
-		} else {
-			err = inflater.(zlib.Resetter).Reset(r, nil)
-		}
+		data, err := inflater.inflate(n)
 		if err != nil {
-			return nil, badPack
-		}
-		data := make([]byte, n)
-		if _, err = io.ReadFull(inflater, data); err != nil {
-			return nil, badPack
-		}
-		var extra [1]byte
-		if got, err := inflater.Read(extra[:]); got != 0 || err != io.EOF {
-			return nil, badPack
+			return nil, err
 		}
 		if k <= 4 {
-			if err = stage(e, k, data); err != nil {
+			added, err := stage(e, k, data)
+			if err != nil {
 				return nil, err
 			}
 			end := len(payload) - r.Len()
 			// Retain small standalone encodings, without pinning their original pack.
-			if e.obj == staged[e.id] && end-start <= 8192 {
+			if added && end-start <= 8192 {
 				e.encoded = payload[start:end]
 			}
 		} else {
@@ -524,7 +570,7 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 			if err != nil {
 				return nil, err
 			}
-			if err = stage(e, base.kind, data); err != nil {
+			if _, err = stage(e, base.kind, data); err != nil {
 				return nil, err
 			}
 			unresolved--
@@ -533,10 +579,31 @@ func (o *objects) unpack(raw []byte) (map[oid]*object, error) {
 			return nil, errors.New("missing delta base")
 		}
 	}
+	// Small packs share one backing allocation for their verified standalone
+	// encodings. Larger packs continue to allocate only what the cache admits.
+	var compressed []byte
+	if count <= len(inflater.entries) {
+		size := 0
+		for i := range entries {
+			if entries[i].obj.compressed == nil {
+				size += len(entries[i].encoded)
+			}
+		}
+		if size <= (16<<20)-o.packedBytes {
+			compressed = make([]byte, size)
+		}
+	}
 	for i := range entries {
 		e := &entries[i]
 		if len(e.encoded) > 0 && e.obj.compressed == nil && o.packedBytes+len(e.encoded) <= 16<<20 {
-			e.obj.compressed = bytes.Clone(e.encoded)
+			if len(compressed) >= len(e.encoded) {
+				size := len(e.encoded)
+				copy(compressed[:size], e.encoded)
+				e.obj.compressed = compressed[:size:size]
+				compressed = compressed[size:]
+			} else {
+				e.obj.compressed = bytes.Clone(e.encoded)
+			}
 			o.packedBytes += len(e.encoded)
 		}
 	}

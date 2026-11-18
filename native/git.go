@@ -38,7 +38,8 @@ func validRef(ref string) bool {
 	if !strings.HasPrefix(ref, "refs/") || len(ref) > 1024 || strings.Contains(ref, "..") || strings.Contains(ref, "@{") || strings.HasSuffix(ref, ".") {
 		return false
 	}
-	for _, part := range strings.Split(ref, "/") {
+	for remaining := ref; ; {
+		part, tail, more := strings.Cut(remaining, "/")
 		if part == "" || part[0] == '.' || strings.HasSuffix(part, ".lock") {
 			return false
 		}
@@ -47,6 +48,10 @@ func validRef(ref string) bool {
 				return false
 			}
 		}
+		if !more {
+			break
+		}
+		remaining = tail
 	}
 	return true
 }
@@ -180,7 +185,10 @@ func (s *Store) gitReceive(r *Repo, body []byte) []byte {
 	if len(pack) > 0 {
 		staged, err = s.objects.unpack(pack)
 	}
-	report := []byte(nil)
+	// Most status reports fit in this scratch buffer. For a sideband reply
+	// the only escaping allocation is the final outer packet stream.
+	var scratch [256]byte
+	report := scratch[:0]
 	if err != nil {
 		report = packet(report, "unpack "+err.Error()+"\n")
 	} else {
@@ -220,9 +228,10 @@ func (s *Store) gitReceive(r *Repo, body []byte) []byte {
 	}
 	report = append(report, flush...)
 	if band {
-		return sideband(nil, report)
+		capacity := len(report) + 4 + 5*((len(report)+65514)/65515)
+		return sideband(make([]byte, 0, capacity), report)
 	}
-	return report
+	return bytes.Clone(report)
 }
 func hasLine(lines []string, want string) bool {
 	for _, line := range lines {
