@@ -1,0 +1,4 @@
+import {createRenderer} from '../game/src/render.js';
+import {createWorld} from '../game/src/world.js';
+let calls=0;const gradient={addColorStop(){}};const context=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get(t,k){return k in t?t[k]:(...args)=>{for(const a of args)if(typeof a==='number'&&!Number.isFinite(a))throw Error(`Invalid ${k} argument`);calls++;};},set(t,k,v){t[k]=v;return true;}});
+const renderer=createRenderer({getContext:()=>context});const s=createWorld();for(const mode of ['title','play','paused','win','loss','dawn']){for(const calm of [false,true]){s.cargo=3;s.inv=.5;s.events=['hit'];s.particles=[{x:200,y:200,life:.5,color:'#fff'}];s.rings=[{x:200,y:200,r:20,life:.5,color:'#fff'}];renderer.draw(s,mode,1200,1/60,calm);}}console.log(`All six screens render in both effects modes: PASS (${calls} canvas operations). This is a code smoke test, not a browser screenshot.`);
