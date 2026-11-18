@@ -105,3 +105,35 @@ repository deletion.
 The TCP listener still returned `EPERM` for this iteration. The table measures
 the in-process workload only. The coordinator's network run can establish
 actual scores and placement.
+
+## Native Go branch
+
+The native production path is `node main.ts`, which uses `process.execve`
+to start the static Linux amd64 binary in the same process. The executable
+handles registration, HTTP serving, and trial shutdown. The original Node
+implementation and its tests remain as a behavioral reference.
+
+The original public Node runner drives the native `net/http` handler through
+a socket-free stdio adapter backed by Go's `httptest`. Its JSON and IPC overhead
+is included in the workload elapsed times. Use the coordinator's TCP trial
+for leaderboard measurements.
+
+The Go CPU profile identified DEFLATE and SHA-1 work in pack processing,
+and JSON and allocation costs in issue writes. The server pools zlib streams,
+retains bounded standalone compressed entries from verified packs, and caches
+framed upload replies by repository and fetch parameters. Ref updates validate
+object connectivity and reuse previously validated immutable subgraphs.
+The REST handler skips query parsing for unqueried routes and avoids copying
+fixed-length small request bodies between read buffers.
+
+The native-only benchmark uses the production handler with an in-memory
+response writer. Median values over three runs on the workspace host:
+
+| Path | Initial Go port | Tuned Go port | Allocation counts |
+| --- | ---: | ---: | ---: |
+| Warm issue GET | 794 ns | 616 ns | 8 → 6 |
+| Issue create | 6.68 µs | 6.33 µs | 23 → 20 |
+| Three-object pack inflate | 9.87 µs | 9.36 µs | 19 → 19 |
+
+Pack timings overlap across runs. The native microbenchmarks isolate server
+work and omit connection handling.

@@ -4,44 +4,40 @@
 [![Rank](https://make.fun/badge/github-core-clone-01/Hax0rgurl/bounded-knight/rank.svg)](https://make.fun/bounty/github-core-clone-01)
 [![Reward](https://make.fun/badge/github-core-clone-01/Hax0rgurl/bounded-knight/reward.svg)](https://make.fun/bounty/github-core-clone-01)
 
-An original, dependency-free GitHub-compatible forge for `github-core-clone-01`.
-Node **22.18+**, standard library only; the service never invokes Git.
+GOOF is a GitHub-compatible forge for `github-core-clone-01`. The native
+server uses Go's standard library and shares one in-memory SHA-1 object store
+across Git smart HTTP, REST, GraphQL, and MCP.
 
-One in-memory SHA-1 object store connects Git smart HTTP (upload-pack v2/v0,
-receive-pack v0), REST `/api/v3`, GraphQL `/api/graphql`, and MCP `/mcp`.
-It supports shallow fetches, delta-pack ingestion, per-ref fast-forward checks,
-contents commits, issues, comments, labels, PR files, and conflict-aware squash merges.
-Compressed objects and bounded fetch responses are cached for repeated fetches.
+The built Linux amd64 executable is at `bin/goof-linux-amd64`. Node 22.18's
+`main.ts` entrypoint replaces the Node process with that executable. The
+native process binds an ephemeral port, registers with `MAKEFUN_ENV_URL`,
+and polls the trial environment until it finishes.
 
-Run locally, with a disposable development token:
-
-```sh
-MAKEFUN_SHOP_TOKEN=development-only FORGE_LOGIN=octopus node serve.ts
-```
-
-The server prints its ephemeral loopback URL. `PORT` optionally selects a port.
-All routes except `/healthz` require `Authorization: Bearer development-only`.
-For the trial lifecycle, run `node main.ts` with `MAKEFUN_ENV_URL` and
-`MAKEFUN_SHOP_TOKEN` supplied by the coordinator. It binds port 0, registers, polls
-`/done`, and exits only when the suite finishes. Leave `FORGE_LOGIN` unset in trials:
-the opaque token's single owner is bound by its first owner-qualified request.
-`MAKEFUN_TRIAL_NOW` supplies deterministic metadata timestamps.
-
-Tests, with no install step:
+Run the native server locally with a disposable token:
 
 ```sh
-node test/core.test.ts
-node test/public-suite.ts /path/to/github-core-clone-01-kit --perf
+MAKEFUN_SHOP_TOKEN=development-only FORGE_LOGIN=octopus node main.ts --serve
 ```
 
-**Verified on Node 22.18.0:** 120/120 published checks and 17/17 additional tests.
-The published suite ran unchanged through a socket-free adapter into the real HTTP
-handler because this build sandbox rejects TCP listeners (`listen EPERM`). All four
-published benchmark workloads completed; adapter timings exclude network overhead
-and establish no official performance score. See [TESTING.md](TESTING.md) and
-[test/results.json](test/results.json).
+The server prints a loopback URL. Set `PORT` to select a port. All routes
+except `/healthz` require a bearer token. For a grader run, set
+`MAKEFUN_ENV_URL` and `MAKEFUN_SHOP_TOKEN` and launch `node main.ts`.
+The trial can leave `FORGE_LOGIN` unset. The first authenticated lookup of
+an existing repository binds its owner. `MAKEFUN_TRIAL_NOW` controls metadata
+timestamps.
 
-State lasts for one process. GraphQL implements the documented client schema subset;
-merges conservatively reject files changed differently on both sides. This is a
-single-tenant competition implementation, not a durable hosted GitHub replacement.
-MIT licensed; starter lifecycle attribution is retained in [LICENSE](LICENSE).
+Build and test with Go 1.23 or newer:
+
+```sh
+GO=/path/to/go ./build.sh
+CGO_ENABLED=0 go test ./native
+CGO_ENABLED=0 go test -c -o /tmp/goof-native-test ./native
+node test/native-suite.ts /absolute/path/to/github-core-clone-01-kit /tmp/goof-native-test --perf
+```
+
+The native suite driver uses `httptest` to run the published checks through
+the production handler in socket-restricted environments. The TypeScript
+implementation remains available as the earlier behavioral reference.
+The native server implements the documented GraphQL schema subset and
+uses file-level conflict detection for squash merges. State lasts for one
+process. See [TESTING.md](TESTING.md).
