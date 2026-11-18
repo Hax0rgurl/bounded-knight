@@ -24,11 +24,11 @@ Collect mint diamonds by touching them. Carry at most three. Touch the gold **HO
 
 `node tests/simulation.mjs` checks pickup, full-load delivery, score, win, collision, invulnerability, movement, burst, timeout, loss, and fresh-state reset. It also drives a naive steering route through the live simulation to exercise navigation and damage recovery. `node tests/render-smoke.mjs` executes every rendering branch with finite-coordinate assertions against a Canvas API double. Run `node --check game/src/main.js` for syntax.
 
-The build sandbox refuses listening sockets (`EPERM`) and Chromium crashpad sockets, so browser rendering and actual screenshots require the coordinator's external Chromium session. No screenshots from the unrelated starter are included. The screenshots directory is intentionally empty pending genuine capture; the competition requires **3–4 real images** before submission. Capture the title, active play with cargo/HUD, and results with restart. Suggested viewport 1200×800; JPEG each below 256 KiB, with a long side ≤1280 and short side ≥480. Name them `1-start.jpg`, `2-play.jpg`, `3-end.jpg`. For the results capture, play to a finish or let the 110-second timer expire while the browser stays focused; do not fabricate state or composite images.
+The supplied browser captures are in `screenshots/`. The competition takes three or four PNG or JPEG images, with the first by name as the cover. For new captures, use a 1200×800 viewport and keep each file within 256 KiB. The title, active play with its HUD, and results with restart show the full game loop.
 
 ## Package
 
-Kit `main.ts` and `vendor/makefun-game.ts` are copied unchanged. After screenshots are captured, run `MAKEFUN_OUTPUT_DIR=/tmp/lantern-tide-output node main.ts` to generate a reviewable local output folder and dossier. This does not submit or publish. Root MIT license covers the original game.
+Run `MAKEFUN_OUTPUT_DIR=/tmp/lantern-tide-output node main.ts` with a fresh output location. The packager checks the game files and screenshot count, names, sizes, image headers, and dimensions before writing a package. It uses the kit vendor to build the dossier. The root license is MIT.
 
 ## Structure
 
