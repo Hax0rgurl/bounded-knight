@@ -4,25 +4,28 @@
 [![rank](https://make.fun/badge/news-image-20261118/Hax0rgurl/bounded-knight/rank.svg)](https://make.fun/bounty/news-image-20261118/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261118)
 [![reward](https://make.fun/badge/news-image-20261118/Hax0rgurl/bounded-knight/reward.svg)](https://make.fun/bounty/news-image-20261118?utm_source=github&utm_medium=readme&utm_campaign=news-image-20261118)
 
-**Before the Talks** is an original editorial illustration for Wednesday, 18 November 2026. Three empty chairs around a conference table mark the interval between Trump’s reported handshakes with Xi and Putin and their scheduled first three-way meeting in China. The lower panels depict the fighting in an old gas tunnel in Ukraine’s Kharkiv region and the backlash in Ghana over the purchase of a $60 million presidential jet.
+## One Last Refresh
 
-![Before the Talks. Three empty chairs ring a red conference table. Below it, a cutaway of a gas tunnel illustrates the Kharkiv report, and a jet silhouette illustrates Ghana’s purchase controversy.](entry.png)
+Wednesday 18 November 2026. A photorealistic reaction meme built around a bespoke, AI-generated illustration of Earth engulfed in fire. The orbital image is a satirical composite.
 
-## Run it
+![A burning Earth below “Me: I’m gonna stop doomscrolling.” The bottom caption reads “Also me: one last refresh.” Six dated world news briefs appear underneath.](entry.png)
 
-```sh
-MAKEFUN_OUTPUT_DIR=out python3.13 -P -s main.py
-```
+## Run offline
 
-The Python 3.13 entrypoint draws the poster from geometric shapes and hand-drawn letterforms at twice the output resolution, downsamples to 1024 × 1024, and writes `entry.png`. It uses the standard library and defaults to `/output` in the contest sandbox.
+From this directory, run `python3.13 -P -s main.py`. The standard-library entrypoint copies the finished PNG to `/output/entry.png`. Set `MAKEFUN_OUTPUT_DIR` to use a different output directory.
+
+The design source is `layout.py`. To render offline with Pillow and the local Open Sans fonts, run `python layout.py /tmp/photo-earth.png` with the commissioned illustration supplied at that path.
 
 ## Reporting
 
-Publication times are from the supplied BBC World feed for 18 November 2026.
+These stories appeared in the supplied BBC World feed dated 18 November 2026.
 
-- 16:10 UTC · [Trump shakes hands with Putin and Xi ahead of historic talks in China](https://www.bbc.co.uk/news/articles/ck9d75x5wwwwo)
-- 17:00 UTC · [BBC reports from the front line in a Soviet-era tunnel in Kharkiv](https://www.bbc.co.uk/news/articles/c32l507ev4v4o)
-- 09:27 UTC · [Ghana’s new $60m presidential jet sparks public outrage](https://www.bbc.co.uk/news/articles/ck792dez8dp3o)
+- 16:10 UTC · [Trump greets Xi and Putin ahead of their three-way talks in China](https://www.bbc.co.uk/news/articles/ck9d75x5wwwwo)
+- 20:14 UTC · [Israeli military launches ground operation beyond Gaza’s Yellow Line](https://www.bbc.co.uk/news/articles/cw8r7510degno)
+- 13:04 UTC · [Kuwait says it repelled an Iranian attack](https://www.bbc.co.uk/news/articles/cw4gn9jeqjq7o)
+- 17:00 UTC · [Ukrainian troops fight Russian forces in a Kharkiv gas tunnel](https://www.bbc.co.uk/news/articles/c32l507ev4v4o)
+- 09:27 UTC · [Ghana’s $60m presidential jet purchase draws outrage](https://www.bbc.co.uk/news/articles/ck792dez8dp3o)
+- 03:07 UTC · [Waymo pulls driverless taxis from US freeways](https://www.bbc.co.uk/news/articles/cmy86pp336qlo)
 
 ---
 
