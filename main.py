@@ -1,2 +1,338 @@
-#coding:l1
-import lzma;exec(lzma.decompress('\0 \0\0â\0\0\0\0\0\0\0ˆGï"²“|ûW.ôj\'öĞ`?ÊĞeƒ–:ïVçm•7c¹¿cv&>µCx•úÆÂ4¹©!¾·sõgùÉ\\å£üóc¯©$Ìæ/F.ı¤Ä‡@TŠ¡¢û8¾XíµÅ¡"ræú9YüJrÊP„ğğŞÉù8©´¢+ˆåw~Z2åg—¥–¤N–ã\rö;R‰tW’W^EmèdĞLƒVÚn kÕÅ^¸·\'$/&ş‘Î³U{«ÜÆÅH\'íó.D!­§a\\~ÀÂxğcØ=ÓÇ¢NCÖ¢« øš9òföæÊz81UÊíÛå™ùè3;W,ed…ÖiâÚÊ N`í! ˆwAõ+m]>f¶Ä b¯ÏèÍ¿¶¶8c0Ã²sŠÖ³„O"\'DtX{ã6›¥—Í{°¼2eê£íé”OäLÛwÏÒQÜ¡….Ù:BêB˜÷Ÿ’L¤DÌ{Õ‡ùñt¾ÌâFÚ5¥U\nï]è­ûè&Xº­Ë8\'zšââçëF¡,ò†¼uœµÁ?{)Š%É¢Ü	•jl¶ŒÙ%\0MÀ	Ip‚ä’*JihMÀÚÒ’·ñLÂvå883³®à®3²BD³ÆÒà…†Ë­)@Æ:{Ÿàˆ{÷»-/æ3Ã °1,–ãĞ‘˜Tä¯Ï8êºá¹Ê-ı‚2{š®Ç\0œÍ8™³#ôâ?w\rê–óaĞÁÈïŒí]†1âBæ,\rXtjíÜšêÜ30¯6º/ï’ÓÓ>¿³ß7]×=$óüúğ>×\rlz…­’’÷î>|„haÍ†N-šš¾:Ã’N¶Yaj[eX\0ôu›€¡Ã\\¯Å3˜‘wÇÛÂt¡P³2‘Æš¬S\'tÄáIô#%ı Ç{rPá¸ÇhMJ9¤`Vğ“>w°Ó–¨#I?0›Q"µKÛÏÛ	úx@F‘ä7áÁ[`d&øá£@Ä=ÍŞ¦/²G÷æY¸¼Ç¥w–YìÉ1ñoƒ?ª_ôñø_­!BŸÿµ³Èğc6cúÈ.†›…/ªó“=üw•c-—¤âV^bš#ö5·«R‹G:ì>­Ì\'|n.u2‹tôÛ¹zJƒm±¡ÊR-]t @®ìËˆyíQ`ƒt{T¡·éã¬)K­„<\n)ûDØÜ})ÄĞ¶\nr;_Ş†\0ÜIŠMª\\xcï	r‘<È\nª†‡æ¾¯^s1FQ–‚jòfÓŠü]|Ó$ôÈS¥ˆÍnHEàŒò‡oÍocØˆ‡r‘`ypÔ˜üÍ˜¥îoİÕksA’0ª¸0r×XxPj¾n¬GºæÖbj·@È*=V“Fáìó_•i*à±ã§¿1E~}¹¬ÈâÉ%¿CJ¡ š	¤wœr5´ï!‚„^¥oa«\\îu&-È¸bº):eç|Åä=1Ãí-U/2àªµyyÆ¹P¸HâRœS–ûJgvÖ¬Ô”/(ÙPÏÊ§‹-æ»CÌ@AE8­«#ÙÊ‚ú~5FŸ;RµÄ:ïÈ2¬u1¶ıÆ÷5W2¶¹ºÚHŒyğàk8:D§şl%A+.Î†ˆr¦ïÏD7WË\\¸İËü~q\\œW4 wOXíŠ;Ùú†›&]Z1Ñğ{Èqd{õCüë× Lxì03 5B5¦êÊÇ²¸¶W¿à?y n«m4G«™ÂaİÚŠ’€ÑÜ…Æ7t\\´(¡0¡ˆ­Bnc1NxSéÌÌ{×î¹p~é÷Ô§€ºt¢qøf%à†Ü[k$z“şYÎ“æ>ó_3mæ¢¦C»C•‹úê¼´Š\n+j<	ëÁ\'yÿBFF+¼û•ÿš¤Nìg§vôÿ&K°7ïòyóaıæx-˜¸n¼¶İu—æ*ÂUn—G]yö¼`ğ ÿ pv"]cŞæØÅ¡%5ÁZRQª—]±ì»²`´x²÷ïÜÀ…U¤³]uâÀ¼Ã\nÂa$aóä›\\(vÈE[Óí‹JñšAğˆºàÕœğu¹Ú’Šù%ÆĞ6¼ÎìoÿQP\'s×‚™§zïêôu¡<ĞìB…jcÌBûs¿¨QÙ¨İ9B íÖ%û~åQëı¨3ÖŒ„/\'µ¡+&	7Õ‹qÅ+m\r]Í•—\x001"_t\n}‡mıİj!ÏÔ·	ˆ%*È7s‘]¿›GËM5s~0¬<¯±VNâ×PQ#ÅŒ—…‘T|$59t7nù£Óó†ì².ÖA€šŠf»”\r/E6P‚«Á²±¾:uGùõv>Ø*§ÿ<iŠ‹ƒ˜Íß%Úb;Ê~ïºü½Õÿtn\nÈåÿß]M¬nXsÆ_TÈ´,Ó	#B¥sÅåº[§:ÇÒ˜IùF5IÜMn¬º¡”Âyöñ+?Í»¨ğx²ƒ¤7Íeù»†[wAÀÜœ‚Øéb—1ü=†#WÂ±¡î¢’òOI	ÃÅ®Âä\'o|mYWÏ•\0³|2w¨6íl¢„´@NÀeaŸ-;ø5Vi6iïÇ`„ÍÔ[…§oùÚí>¿	B²„ğ²€Öeú>fåûä¼êæSˆœ ©GÅMgß+j"­gÿ;ü*¤?èÌ®=Û%\\3Ù÷œP>âù˜7‚ïw/Ş¨\'ì ÑìmËŒ¢#zUï«8&>‘:Úã6Ğ]ÕlHëáÛ¶z6ÉËU¸üZ/Åi€ƒ×Ì5`pJ¨“=&%>JÉoA¿Æ„û©=ÛîıİNÓrŒÔ‹b=ıÎÚíÌJôt­×şSQqy¾#wTÒ”I‹ôãÕ½£ù…$ §$J…QXx÷¤Õ–µˆ*{OÇÇ¶½»ºY©ã÷2%v*NMy\n¯TH]€øµÌà‹5·(D°Â¦Ëšoh™>»’¦Ø7A€/©ôQÈÛğinüD_¦Ã‹dH;épOŒWÃ2nCœ":ûŠ@Zcƒ¦ÿâÍ“ê—`Vû™™ÊãóEè#\\-¶İ´I\'¾)âƒHã…>=A)ÿ´˜( "ŞÅÕèXD”a¦U\r\0‹××z*Äõ|*sr¸b^ªhÙàÉ³ïÌÕ3õ<\n-q8ÓFÎ>æmİxGFæ72ÚM¶k|k*şì\n°Õ´vÄç«„›Ïìä3)¢@œÏ¦,í/ER©?õ}ïR¶ğ—ØÇo¸™züg\n¸\ræƒø(‚<t{\n[K—½uç‹!i®cÿMÎÇ\'Şæk…>!9¬èæn7]¨Tˆ ç÷1ûd(<;ÇOİ\nZÎ²†lÉÜBöÉ$„:-CH¤ª&t€?§‚ÏeŠ&bqˆ‰;¡Õïaø¨äæwÒj1\\éˆøK¾¤´Í‘\\qÈğ–YïTcu‚„í¸\0íaç¯k¥ ÁPı·D\\b1ÜÜŸ¸ódt]‹eK¶#w	Eğ£Å¶˜0TÙ==b\r²º5¿Í¹f‰óãKRDÕº{Ö‚9({Xë\'jYßQÂÿ"G<+±]*¢{OB¬U¸@Ì+¸8„\\|aZŞÓ›êè—2¾X)¾ô?)^0[îo{º—‹ç¸\0:ŠØ$Ûşÿr¦|€=ÂKç-¦C µ¶]{U½y„ÍqÒãó‚`ı§NıYÑŞõ$=tÌè:2›œtÕÿaàX‡xv£ù#ò·ÃlŞu¤9tú·öÒAm†â³|l,ºZ2ƒŸ„6§“Üì	ÁL =h8x÷%%	{4ób{qú¨ú¨şã]jĞN‹ÊlÑ÷b´ô	í¯ËrR@yüà¼ñúd…Ã6Œˆ7ZS+³bTu{»ş”—É‡|c|ñ_.Ö<›ç'.encode('l1')))
+"""Offline launch-day Twitch quantiles and a comparable-only backtest."""
+
+import argparse
+from dataclasses import dataclass
+from datetime import datetime
+import json
+import math
+import os
+from pathlib import Path
+from statistics import median
+
+LEVELS = (0.05, 0.25, 0.5, 0.75, 0.95)
+NORMAL_LEVELS = (-1.645, -0.674, 0, 0.674, 1.645)
+HORIZONS = range(1, 24)
+SQRT_TWO = math.sqrt(2)
+
+
+def log_count(value):
+    return math.log(max(1, value))
+
+
+def hours_from(timestamp, start):
+    return (datetime.fromisoformat(timestamp) - start).total_seconds() / 3600
+
+
+def hourly_rows(rows, day_start, *, history_only=False):
+    start = datetime.fromisoformat(day_start)
+    result = {}
+    for row in rows:
+        offset = hours_from(row["from"], start)
+        if offset.is_integer() and (not history_only or offset <= 0):
+            result[int(offset)] = row
+    return result
+
+
+def regime(description):
+    # Ignore the kit's retrospective tier and peak commentary.
+    text = description.lower().split("tier:")[0].split("source:")[0]
+    if "no early access" not in text and any(
+        phrase in text for phrase in ("early access", "early-access")
+    ):
+        return "early"
+    if any(phrase in text for phrase in ("rolling", "midnight local")):
+        if "pc single" in text or "steam global" in text or "pc/stadia simultaneous" in text:
+            return "mixed"
+        return "rolling"
+    if ("single" in text or "simultaneous" in text) and "global" in text and "inferred" not in text:
+        return "global"
+    return "unknown"
+
+
+def snapshot(rows, launch_regime, platforms):
+    first = rows.get(0, {})
+    viewers = first.get("viewers")
+    channels = first.get("channels")
+    level = log_count(viewers) if viewers is not None else None
+
+    def growth(field, current, offsets):
+        previous = [
+            log_count(rows[h][field])
+            for h in offsets
+            if h in rows and rows[h].get(field) is not None
+        ]
+        if current is None or not previous:
+            return None
+        return max(-4, min(4, log_count(current) - median(previous)))
+
+    features = (
+        level,
+        growth("viewers", viewers, (-1,)),
+        growth("viewers", viewers, (-4, -3, -2)),
+        growth("viewers", viewers, (-12, -11, -10, -9, -8, -7, -6)),
+        growth("channels", channels, (-4, -3, -2)),
+        level - log_count(channels) if level is not None and channels else None,
+    )
+    pc = "pc" in platforms.lower() if platforms else None
+    return Snapshot(level, launch_regime, pc, features)
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    level: float | None
+    regime: str
+    pc: bool | None
+    features: tuple
+
+
+@dataclass(frozen=True)
+class Launch:
+    name: str
+    snapshot: Snapshot
+    ratios: dict
+
+
+def comparable_launches(records):
+    launches = {}
+    for record in records:
+        name = record["name"]
+        unlock = record.get("unlock") or ""
+        if "target-history" in unlock.lower() or unlock.lower().startswith("not a launch"):
+            continue
+        key = (" ".join(name.casefold().split()), record["day_start"])
+        if key in launches:
+            continue
+        rows = hourly_rows(record["hourly"], record["day_start"])
+        state = snapshot(rows, regime(unlock), record.get("platforms"))
+        if state.level is None:
+            continue
+        ratios = {
+            h: log_count(rows[h]["viewers"]) - state.level
+            for h in HORIZONS if h in rows and rows[h].get("viewers") is not None
+        }
+        if ratios:
+            launches[key] = Launch(name, state, ratios)
+    return list(launches.values())
+
+
+def similarity(target, analog):
+    if target.level is None:
+        return 0.0
+    scales = (1.30, 0.65, 1.15, 1.70, 1.40, 0.85)
+    importance = (1.30, 0.75, 0.90, 0.70, 0.50, 0.45)
+    distance = sum(
+        weight * math.log1p(((left - right) / scale) ** 2)
+        for left, right, scale, weight in zip(
+            target.features, analog.features, scales, importance
+        )
+        if left is not None and right is not None
+    )
+    weight = math.exp(-0.65 * distance)
+    if target.regime != analog.regime:
+        if "unknown" in (target.regime, analog.regime):
+            weight *= 0.55
+        elif {target.regime, analog.regime} == {"rolling", "mixed"}:
+            weight *= 0.65
+        else:
+            weight *= 0.18
+    if target.pc is not None and analog.pc is not None and target.pc != analog.pc:
+        weight *= 0.65
+    return weight
+
+
+def weighted_launches(target, launches):
+    return [(launch, similarity(target, launch.snapshot)) for launch in launches]
+
+
+def distribution(neighbors, horizon, adjustment=0.0):
+    """A weighted Gaussian mixture over log changes from the first hour."""
+    analogs = [(launch.ratios[horizon], w) for launch, w in neighbors
+               if horizon in launch.ratios and w > 0]
+    mass = sum(w for _, w in analogs)
+    persistence_spread = 0.15 * math.sqrt(horizon)
+    if not mass:
+        return [(adjustment, persistence_spread, 1.0)]
+    effective = mass * mass / sum(w * w for _, w in analogs)
+    bandwidth = 0.13 + 0.025 * math.sqrt(horizon)
+    # Reserve more probability for persistence as absolute match quality or support falls.
+    prior_mass = min(0.70, 0.06 + 0.30 / (1 + mass) + 0.30 / (1 + effective))
+    return [(change + adjustment, bandwidth, (1 - prior_mass) * w / mass)
+            for change, w in analogs] + [(adjustment, persistence_spread, prior_mass)]
+
+
+def cdf(components, value):
+    return sum(weight * (1 + math.erf((value - mean) / (spread * SQRT_TWO))) / 2
+               for mean, spread, weight in components)
+
+
+def quantile(components, probability):
+    low = min(mean - 8 * spread for mean, spread, _ in components)
+    high = max(mean + 8 * spread for mean, spread, _ in components)
+    for _ in range(28):
+        center = (low + high) / 2
+        if cdf(components, center) < probability:
+            low = center
+        else:
+            high = center
+    return (low + high) / 2
+
+
+def calibration_records(launches):
+    """PIT values for launches predicted without their own release-day trajectory."""
+    records = []
+    for position, launch in enumerate(launches):
+        neighbors = weighted_launches(launch.snapshot, launches[:position] + launches[position + 1:])
+        pits = {
+            h: cdf(distribution(neighbors, h), outcome)
+            for h, outcome in launch.ratios.items()
+        }
+        records.append(pits)
+    return records
+
+
+def calibrated_levels(records, neighbors, horizon):
+    # Use at most one PIT per launch. Shrink the local PIT CDF toward uniform,
+    # reserving 24 observations' worth of weight for the uncalibrated forecast.
+    sample = sorted((pits[horizon], weight)
+                    for pits, (_, weight) in zip(records, neighbors)
+                    if horizon in pits and weight > 0)
+    if not sample:
+        return LEVELS
+    mass = sum(weight for _, weight in sample)
+    effective = mass * mass / sum(weight * weight for _, weight in sample)
+    strength = effective / (24 + effective) * min(1, mass)
+    knots = [(0.0, 0.0)]
+    cumulative = 0.0
+    for pit, weight in sample:
+        cumulative += weight / (2 * mass)
+        knots.append(((1 - strength) * pit + strength * cumulative, pit))
+        cumulative += weight / (2 * mass)
+    knots.append((1.0, 1.0))
+    adjusted = []
+    for level in LEVELS:
+        for (left, bottom), (right, top) in zip(knots, knots[1:]):
+            if left < level <= right:
+                probability = bottom + (top - bottom) * (level - left) / (right - left)
+                adjusted.append(max(0.005, min(0.995, probability)))
+                break
+    return adjusted
+
+
+def forecast_logs(target, launches, horizons, minute_trend=0.0, fallback=0.0):
+    neighbors = weighted_launches(target, launches)
+    records = calibration_records(launches)
+    level = target.level if target.level is not None else fallback
+    for h in horizons:
+        # Hourly archives lack intra-hour reads. Use the live trend only as a
+        # bounded near-term correction and let the analog curves take over.
+        adjustment = minute_trend * math.exp(-(h - 1) / 1.5)
+        components = distribution(neighbors, h, adjustment)
+        probabilities = calibrated_levels(records, neighbors, h)
+        yield h, [level + quantile(components, p) for p in probabilities]
+
+
+def first_hour_trend(case):
+    start = datetime.fromisoformat(case["day_start"])
+    early, late = [], []
+    for row in case.get("history") or []:
+        offset = hours_from(row["at"], start)
+        if row.get("viewers") is not None:
+            if 0 <= offset < 1 / 3:
+                early.append(log_count(row["viewers"]))
+            elif 2 / 3 <= offset < 1:
+                late.append(log_count(row["viewers"]))
+    if min(len(early), len(late)) < 5:
+        return 0.0
+    return max(-0.30, min(0.30, 0.5 * (median(late) - median(early))))
+
+
+def viewer_quantiles(values):
+    return [round(math.exp(max(0, min(math.log(1e9), value))), 6)
+            for value in values]
+
+
+def forecast_case(case):
+    launches = comparable_launches(case.get("comparables") or [])
+    rows = hourly_rows(case.get("history_hourly") or [], case["day_start"], history_only=True)
+    first = next((row for row in case["known"] if row["hour"] == 1), {})
+    if first.get("viewers") is not None:
+        rows[0] = first
+    notes = case.get("notes") or ""
+    kind = regime(notes.split("real unlock:")[-1])
+    # The contest specifies rolling local-midnight unlocks for its target and
+    # practice cases. Use that schedule if the case omits explicit prose.
+    kind = "rolling" if kind == "unknown" else kind
+    state = snapshot(rows, kind, "console")
+    previous = [log_count(rows[h]["viewers"]) for h in sorted(rows)[-6:]
+                if rows[h].get("viewers") is not None]
+    fallback = median(previous) if previous else 0.0
+    logs = forecast_logs(state, launches, (r["hour"] - 1 for r in case["forecast"]),
+                         first_hour_trend(case), fallback)
+    return {"hours": [
+        {"hour": h + 1, "q": viewer_quantiles(values)}
+        for h, values in logs
+    ]}
+
+
+def backtest(paths):
+    records = (record for path in paths
+               for record in json.loads(path.read_text(encoding="utf-8"))["comparables"])
+    launches = comparable_launches(records)
+    if len(launches) < 2:
+        raise SystemExit("Backtesting requires at least two distinct launches.")
+    groups = {"all": [], "rolling": []}
+    for position, launch in enumerate(launches):
+        training = launches[:position] + launches[position + 1:]
+        state = launch.snapshot
+        results = []
+        for h, prediction in forecast_logs(state, training, launch.ratios):
+            actual = state.level + launch.ratios[h]
+            center = math.exp(state.level)
+            baseline = [
+                math.log(math.floor(100 * center * math.exp(z * 0.15 * math.sqrt(h)) + 0.5) / 100)
+                for z in NORMAL_LEVELS
+            ]
+            results.append((actual, [math.log(q) for q in viewer_quantiles(prediction)], baseline))
+        groups["all"].append(results)
+        if state.regime == "rolling":
+            groups["rolling"].append(results)
+    for name, folds in groups.items():
+        hours = [row for fold in folds for row in fold]
+        if not hours:
+            continue
+        print(f"{name}: {len(folds)} launches, {len(hours)} scored hours")
+        for index, label in enumerate(("forecast", "house persistence"), start=1):
+            loss = error = covered = 0.0
+            for row in hours:
+                actual, quantiles = row[0], row[index]
+                error += abs(actual - quantiles[2])
+                covered += quantiles[0] <= actual <= quantiles[-1]
+                for level, estimate in zip(LEVELS, quantiles):
+                    delta = actual - estimate
+                    loss += 2 * max(level * delta, (level - 1) * delta)
+            print(f"  {label}: loss {loss / (5 * len(hours)):.6f}, "
+                  f"typical miss {100 * math.expm1(error / len(hours)):.2f}%, "
+                  f"90% coverage {covered / len(hours):.3f}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--backtest", type=Path, nargs="+", metavar="CASE")
+    args = parser.parse_args()
+    if args.backtest:
+        backtest(args.backtest)
+        return
+    input_dir = Path(os.environ.get("MAKEFUN_INPUT_DIR", "/input"))
+    output_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for path in sorted(input_dir.glob("*.in")):
+        case = json.loads(path.read_text(encoding="utf-8"))
+        result = forecast_case(case)
+        (output_dir / f"{path.stem}.out").write_text(
+            json.dumps(result, separators=(",", ":"), allow_nan=False) + "\n",
+            encoding="utf-8",
+        )
+
+
+if __name__ == "__main__":
+    main()
